@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 import os
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt
+from jose import jwt # type: ignore
 from dotenv import load_dotenv
 
 from app.database import get_db
