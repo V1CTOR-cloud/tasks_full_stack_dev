@@ -10,17 +10,19 @@ from app.dependencies.auth import get_current_user
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
-@router.get("/", response_model=list[TaskResponse])
+@router.get("/", response_model=list[TaskResponse], status_code=status.HTTP_200_OK)
 def get_all(db: Session = Depends(get_db)):
     return db.query(Task).all()
 
 
-@router.get("/user/{user_id}", response_model=list[TaskResponse])
+@router.get(
+    "/user/{user_id}", response_model=list[TaskResponse], status_code=status.HTTP_200_OK
+)
 def get_by_user(user_id: int, db: Session = Depends(get_db)):
     return db.query(Task).filter(Task.user_id == user_id).all()
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get("/{task_id}", response_model=TaskResponse, status_code=status.HTTP_200_OK)
 def get_one(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
 
@@ -95,4 +97,4 @@ def patch_task(
     db.commit()
     db.refresh(existing_task)
 
-    return {"message": "Task updated successfully", "task": existing_task}
+    return {"message": "Task updated successfully", "Task": existing_task}
