@@ -1,5 +1,6 @@
+from datetime import datetime
 import enum
-from sqlalchemy import ForeignKey, String, Text, Enum
+from sqlalchemy import DateTime, ForeignKey, String, Text, text, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -28,6 +29,9 @@ class Task(Base):
     description: Mapped[str | None] = mapped_column(Text)
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus, name="task_status"), nullable=False, default=TaskStatus.todo
+    )
+    due_date: Mapped[datetime] = mapped_column(
+        DateTime, server_default=text("CURRENT_TIMESTAMP + INTERVAL '14 days'")
     )
 
     user: Mapped["User"] = relationship(back_populates="tasks")

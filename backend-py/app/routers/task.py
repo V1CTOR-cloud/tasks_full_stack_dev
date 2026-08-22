@@ -43,6 +43,7 @@ def add_task(
         title=task.title,
         description=task.description,
         status=task.status,
+        due_date=task.due_date
     )
 
     db.add(new_task)
