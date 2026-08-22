@@ -1,4 +1,3 @@
-from fastapi import FastAPI
 from pydantic import BaseModel, EmailStr
 
 
@@ -11,6 +10,7 @@ class UserUpdate(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
     password: str | None = None
+    team_id: int | None = None
 
 
 class UserResponse(BaseModel):
