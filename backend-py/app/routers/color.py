@@ -6,6 +6,7 @@ from app.models.color import Color
 from app.models.user import User
 from app.schemas.color import ColorResponse, ColorCreate
 from app.dependencies.auth import get_current_user
+from app.crud.color import find_color
 
 router = APIRouter(prefix="/colors", tags=["Colors"])
 
@@ -17,12 +18,32 @@ def get_all(
     return db.query(Color).all()
 
 
+@router.get("/{color}", response_model=ColorResponse)
+def get_color(
+    color: str,
+    db: Session = Depends(get_db),
+):
+    existing_color = find_color(db, color)
+
+    if not existing_color:
+        raise HTTPException(status_code=404, detail="Color not found")
+
+    return existing_color
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def add_color(
     color_obj: ColorCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    existing_color = find_color(db, color_obj.color)
+
+    if existing_color:
+        raise HTTPException(
+            status_code=401, detail=f"#{existing_color.color} already exists"
+        )
+
     new_color = Color(color=color_obj.color)
 
     db.add(new_color)

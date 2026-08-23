@@ -1,11 +1,20 @@
 from pydantic import BaseModel
-from app.models.color import Color
-
+from app.schemas.color import ColorResponse
 
 class TeamCreate(BaseModel):
     name: str
+    hex_color: str | None = None
 
 
 class TeamUpdate(BaseModel):
     name: str | None = None
-    color: Color | None = None
+    hex_color: str | None = None
+
+
+class TeamResponse(BaseModel):
+    id: int
+    name: str
+    hex_color: str | None = None
+    color: ColorResponse | None = None
+
+    model_config = {"from_attributes": True}

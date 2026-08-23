@@ -14,7 +14,8 @@ class Team(Base):
 
     name: Mapped[str] = mapped_column(
         String(100),
-        nullable=False
+        nullable=False,
+        unique=True
     )
 
     hex_color: Mapped[str | None] = mapped_column(
@@ -29,3 +30,5 @@ class Team(Base):
     users: Mapped[list["User"]] = relationship(
         back_populates="team"
     )
+    
+    
