@@ -1,0 +1,8 @@
+# Only for backend dev
+/front_vite
+
+# Only for front dev
+#/backend-py
+
+# Only for designers
+/Design
