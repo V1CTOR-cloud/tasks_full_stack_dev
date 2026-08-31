@@ -1,20 +1,23 @@
 from datetime import datetime
 from fastapi import FastAPI
 from pydantic import BaseModel
-from app.models.task import TaskStatus
+from app.models.task import TaskStatus,TaskPriority
 
 
 class TaskCreate(BaseModel):
     title: str
     description: str | None = None
-    status: TaskStatus
+    status: TaskStatus | None = None
+    priority: TaskPriority | None = None
     due_date: datetime | None = None
+    project_id: int
 
 
 class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     status: TaskStatus | None = None
+    priority: TaskPriority | None = None
     due_date: datetime | None = None
 
 
@@ -23,6 +26,8 @@ class TaskResponse(BaseModel):
     title: str
     description: str | None = None
     status: TaskStatus
+    priority: TaskPriority
     due_date: datetime | None = None
+    project_id: int
 
     model_config = {"from_attributes": True}
