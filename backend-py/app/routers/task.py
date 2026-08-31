@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.crud.task import user_has_task_access
+from app.crud.task import user_has_task_access, get_task
 from app.crud.project import get_project, user_has_project_access
 
 from app.models.task import Task
@@ -50,21 +50,17 @@ def get_task_by_id(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    existing_task = (
-        db.query(Task)
-        .filter(Task.id == task_id, Task.user_id == current_user.id)
-        .first()
-    )
+    task = get_task(db, task_id)
 
-    if not existing_task:
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if not user_has_task_access(db, current_user, existing_task):
+    if not user_has_task_access(db, current_user, task):
         raise HTTPException(
-            status_code=404, detail="You don't have access to this task"
+            status_code=403, detail="You don't have access to this task"
         )
 
-    return existing_task
+    return task
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -106,24 +102,23 @@ def delete_task(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    task = db.query(Task).filter(Task.id == task_id).first()
+    task = get_task(db, task_id)
 
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    project = get_project(db, task.project_id)
-
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    if not user_has_project_access(db, current_user, project):
         raise HTTPException(
-            status_code=403, detail="You don't have access to this task"
+            status_code=404,
+            detail="Task not found"
+        )
+    
+    if not user_has_task_access(db, current_user, task):
+        raise HTTPException(
+            status_code=403,
+            detail="You don't have access to this task"
         )
 
     db.delete(task)
     db.commit()
-    
+
     return {"message": "Task deleted successfully"}
 
 
@@ -136,19 +131,18 @@ def update_task(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    task = db.query(Task).filter(Task.id == task_id).first()
+    task = get_task(db, task_id)
 
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    project = get_project(db, task.project_id)
-
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    if not user_has_project_access(db, current_user, project):
         raise HTTPException(
-            status_code=403, detail="You don't have access to this task"
+            status_code=404,
+            detail="Task not found"
+        )
+
+    if not user_has_task_access(db, current_user, task):
+        raise HTTPException(
+            status_code=403,
+            detail="You don't have access to this task"
         )
 
     update_data = task_update.model_dump(exclude_unset=True)
