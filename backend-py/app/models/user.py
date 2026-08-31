@@ -1,6 +1,6 @@
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import DateTime, String, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from datetime import datetime
 from app.database import Base
 from typing import TYPE_CHECKING
 
@@ -14,32 +14,18 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    username: Mapped[str] = mapped_column(
-        String(50),
-        unique=True,
-        nullable=False
-    )
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
-    email: Mapped[str] = mapped_column(
-        String(100),
-        unique=True,
-        nullable=False
-    )
+    email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
-    password: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    team_id: Mapped[int | None] = mapped_column(
-        ForeignKey("teams.id")
-    )
+    team_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id"))
 
-    tasks: Mapped[list["Task"]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
+    tasks: Mapped[list["Task"]] = relationship(back_populates="user")
 
-    team: Mapped["Team | None"] = relationship(
-        back_populates="users"
+    team: Mapped["Team | None"] = relationship(back_populates="users")
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
     )
