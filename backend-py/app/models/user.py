@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.task import Task
     from app.models.team import Team
+    from app.models.project import Project
 
 
 class User(Base):
@@ -29,3 +30,5 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
+
+    projects: Mapped[list["Project"]] = relationship(back_populates="owner")

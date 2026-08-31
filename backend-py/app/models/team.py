@@ -3,6 +3,7 @@ from sqlalchemy import DateTime, String, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 from datetime import datetime
+from app.models.project_teams import ProjectTeams
 
 if TYPE_CHECKING:
     from app.models.color import Color
@@ -26,7 +27,7 @@ class Team(Base):
     users: Mapped[list["User"]] = relationship(back_populates="team")
 
     projects: Mapped[list["Project"]] = relationship(
-        secondary="project_teams", back_populates="teams"
+        secondary=ProjectTeams.__table__, back_populates="teams"
     )
 
     created_at: Mapped[datetime] = mapped_column(

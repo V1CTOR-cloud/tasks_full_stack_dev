@@ -3,12 +3,13 @@ from app.database import Base
 from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, String, Text, text, Enum, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from app.models.project_teams import ProjectTeams
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.team import Team
     from app.models.task import Task
+    from app.models.user import User
 
 
 class ProjectStatus(enum.Enum):
@@ -33,7 +34,7 @@ class Project(Base):
     )
 
     teams: Mapped[list["Team"]] = relationship(
-        secondary="project_teams", back_populates="projects"
+        secondary=ProjectTeams.__table__, back_populates="projects"
     )
 
     tasks: Mapped[list["Task"]] = relationship(
@@ -43,3 +44,6 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
+
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    owner: Mapped["User"] = relationship(back_populates="projects")
