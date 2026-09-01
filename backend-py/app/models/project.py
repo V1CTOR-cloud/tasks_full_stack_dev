@@ -1,10 +1,12 @@
-import enum
 from app.database import Base
+import enum
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, String, Text, text, Enum, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.project_teams import ProjectTeams
 from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, String, Text, Enum, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.models.project_teams import ProjectTeams
 
 if TYPE_CHECKING:
     from app.models.team import Team

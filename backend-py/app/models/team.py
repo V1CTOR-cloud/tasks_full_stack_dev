@@ -1,8 +1,9 @@
 from app.database import Base
-from sqlalchemy import DateTime, String, ForeignKey, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 from datetime import datetime
+from sqlalchemy import DateTime, String, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.models.project_teams import ProjectTeams
 
 if TYPE_CHECKING:

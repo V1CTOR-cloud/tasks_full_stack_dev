@@ -1,7 +1,8 @@
+from app.database import Base
+
 from sqlalchemy import DateTime, String, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
-from app.database import Base
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

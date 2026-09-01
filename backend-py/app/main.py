@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-from app.routers import user, auth, task, color, team
+from app.routers import user, auth, task, color
 from app.routers.project import router as project_router
 from app.routers.team import router as team_router
-
 
 app = FastAPI(
     title="tasks_full_stack_dev",
