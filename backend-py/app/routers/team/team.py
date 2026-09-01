@@ -81,7 +81,7 @@ def patch_team(
     if not existing_team:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    if not is_user_in_team(current_user, existing_team):
+    if not is_user_in_team(db,current_user, existing_team):
         raise HTTPException(
             status_code=404,
             detail=f"the user {current_user.username} does not belong to {existing_team.name}",
@@ -122,7 +122,7 @@ def del_team(
     if not existing_team:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    if not is_user_in_team(current_user, existing_team):
+    if not is_user_in_team(db,current_user, existing_team):
         raise HTTPException(
             status_code=404,
             detail=f"the user {current_user.username} does not belong to {existing_team.name}",
