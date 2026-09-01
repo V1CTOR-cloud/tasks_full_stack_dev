@@ -19,6 +19,7 @@ class TaskUpdate(BaseModel):
     status: TaskStatus | None = None
     priority: TaskPriority | None = None
     due_date: datetime | None = None
+    user_id: int | None = None
 
 
 class TaskResponse(BaseModel):
@@ -28,6 +29,7 @@ class TaskResponse(BaseModel):
     status: TaskStatus
     priority: TaskPriority
     due_date: datetime | None = None
+    user_id: int | None
     project_id: int
 
     model_config = {"from_attributes": True}

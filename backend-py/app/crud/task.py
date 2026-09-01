@@ -18,3 +18,16 @@ def user_has_task_access(db: Session, user: User, task: Task) -> bool:
         return False
 
     return user_has_project_access(db, user, project)
+
+
+def user_can_be_assigned_to_task(db: Session, user: User, task: Task) -> bool:
+
+    if not user.team_id:
+        return False
+
+    return (
+        db.query(Project)
+        .filter(Project.id == task.project_id, Project.teams.any(id=user.team_id))
+        .first()
+        is not None
+    )

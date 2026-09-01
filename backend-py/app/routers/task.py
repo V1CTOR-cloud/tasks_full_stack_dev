@@ -3,24 +3,21 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.crud.task import user_has_task_access, get_task
+from app.crud.task import user_has_task_access, get_task, user_can_be_assigned_to_task
 from app.crud.project import get_project, user_has_project_access
-from app.crud.comment import get_comment, get_comments_by_task, is_owner
+from app.crud.comment import get_comments_by_task, is_owner
 
 from app.models.task import Task
 from app.models.user import User
 from app.models.project import Project
 from app.models.comment import Comment
+from app.models.team import Team
 
 from app.schemas.task import TaskResponse, TaskCreate, TaskUpdate
 from app.schemas.comment import CommentCreate, CommentResponse
+from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
-
-
-@router.get("/", response_model=list[TaskResponse], status_code=status.HTTP_200_OK)
-def get_all(db: Session = Depends(get_db)):
-    return db.query(Task).all()
 
 
 @router.get(
@@ -30,7 +27,7 @@ def get_by_user(user_id: int, db: Session = Depends(get_db)):
     return db.query(Task).filter(Task.user_id == user_id).all()
 
 
-@router.get("/", response_model=list[TaskResponse])
+@router.get("/", response_model=list[TaskResponse], status_code=status.HTTP_200_OK)
 def get_tasks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -40,12 +37,46 @@ def get_tasks(
         .join(Task.project)
         .filter(
             Task.project.has(Project.teams.any(id=current_user.team_id))
-            | (Task.project.has(Project.owner_id == current_user.id))
+            | Task.project.has(Project.owner_id == current_user.id)
         )
         .all()
     )
 
     return tasks
+
+
+@router.get(
+    "/{task_id}/assignees",
+    response_model=list[UserResponse],
+    status_code=status.HTTP_200_OK,
+)
+def get_assignees(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    task = get_task(db, task_id)
+
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found",
+        )
+
+    if not user_has_task_access(db, current_user, task):
+        raise HTTPException(
+            status_code=403,
+            detail="You don't have access to this task",
+        )
+
+    return (
+        db.query(User)
+        .join(User.team)
+        .join(Team.projects)
+        .filter(Project.id == task.project_id)
+        .distinct()
+        .all()
+    )
 
 
 @router.get("/{task_id}", response_model=TaskResponse, status_code=status.HTTP_200_OK)
@@ -67,7 +98,7 @@ def get_task_by_id(
     return task
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def add_task(
     task: TaskCreate,
     db: Session = Depends(get_db),
@@ -97,10 +128,10 @@ def add_task(
     db.commit()
     db.refresh(new_task)
 
-    return {"message": "Task registered successfully", "task": task}
+    return new_task
 
 
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{task_id}", status_code=status.HTTP_200_OK)
 def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
@@ -122,9 +153,7 @@ def delete_task(
     return {"message": "Task deleted successfully"}
 
 
-@router.patch(
-    "/{task_id}", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED
-)
+@router.patch("/{task_id}", response_model=TaskResponse, status_code=status.HTTP_200_OK)
 def update_task(
     task_id: int,
     task_update: TaskUpdate,
@@ -142,6 +171,19 @@ def update_task(
         )
 
     update_data = task_update.model_dump(exclude_unset=True)
+
+    if "user_id" in update_data:
+        user_id = update_data["user_id"]
+
+        user = db.query(User).filter(User.id == user_id).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not user_can_be_assigned_to_task(db, user, task):
+            raise HTTPException(
+                status_code=403, detail="This user cannot be assigned to this task"
+            )
 
     for field, value in update_data.items():
         setattr(task, field, value)
@@ -237,9 +279,9 @@ def update_comment(
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    if comment.author_id != current_user.id:
+    if not is_owner(current_user, comment):
         raise HTTPException(
-            status_code=403, detail="You can only edit your own comments"
+            status_code=403, detail="You can only delete your own comments"
         )
 
     comment.comment = comment_update.comment
@@ -276,7 +318,7 @@ def delete_comment(
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    if comment.author_id != current_user.id:
+    if not is_owner(current_user, comment):
         raise HTTPException(
             status_code=403, detail="You can only delete your own comments"
         )
