@@ -99,7 +99,7 @@ def update_comment(
 
     if not is_owner(current_user, comment):
         raise HTTPException(
-            status_code=403, detail="You can only delete your own comments"
+            status_code=403, detail="You can only update your own comments"
         )
 
     comment.comment = comment_update.comment
@@ -144,4 +144,4 @@ def delete_comment(
     db.delete(comment)
     db.commit()
 
-    return {"message": "Comment deleted successfully", "comment": comment}
+    return {"message": "Comment deleted successfully"}

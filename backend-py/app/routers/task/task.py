@@ -7,31 +7,55 @@ from app.dependencies.auth import get_current_user
 from app.crud.user import get_user
 from app.crud.task import user_has_task_access, get_task, user_can_be_assigned_to_task
 from app.crud.project import get_project, user_has_project_access
-from app.crud.comment import get_comments_by_task, is_owner
 
 from app.models.task import Task
 from app.models.user import User
 from app.models.project import Project
-from app.models.comment import Comment
 from app.models.team import Team
 
 from app.schemas.task import TaskResponse, TaskCreate, TaskUpdate
-from app.schemas.comment import CommentCreate, CommentResponse
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 @router.get(
-    "/user/{user_id}", response_model=list[TaskResponse], status_code=status.HTTP_200_OK
+    "/user/{user_id}",
+    response_model=list[TaskResponse],
+    status_code=status.HTTP_200_OK,
 )
-def get_by_user(user_id: int, db: Session = Depends(get_db)):
+def get_by_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     user = get_user(db, user_id)
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
 
-    return db.query(Task).filter(Task.user_id == user_id).all()
+    tasks = (
+        db.query(Task)
+        .join(Task.project)
+        .filter(
+            Task.user_id == user_id,
+            (
+                Task.project.has(
+                    Project.owner_id == current_user.id
+                )
+                |
+                Task.project.has(
+                    Project.teams.any(id=current_user.team_id)
+                )
+            ),
+        )
+        .all()
+    )
+
+    return tasks
 
 
 @router.get("/", response_model=list[TaskResponse], status_code=status.HTTP_200_OK)
