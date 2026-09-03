@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.dependencies.auth import get_current_user
 
 from app.models.color import Color
 from app.models.user import User
+
 from app.schemas.color import ColorResponse, ColorCreate
-from app.dependencies.auth import get_current_user
-from app.crud.color import find_color
+
+from app.crud.color import get_color
 
 router = APIRouter(prefix="/colors", tags=["Colors"])
 
@@ -19,11 +21,11 @@ def get_all(
 
 
 @router.get("/{color}", response_model=ColorResponse)
-def get_color(
+def get_color_by_hex(
     color: str,
     db: Session = Depends(get_db),
 ):
-    existing_color = find_color(db, color)
+    existing_color = get_color(db, color)
 
     if not existing_color:
         raise HTTPException(status_code=404, detail="Color not found")
@@ -31,13 +33,13 @@ def get_color(
     return existing_color
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ColorResponse, status_code=status.HTTP_201_CREATED)
 def add_color(
     color_obj: ColorCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    existing_color = find_color(db, color_obj.color)
+    existing_color = get_color(db, color_obj.color)
 
     if existing_color:
         raise HTTPException(
@@ -49,7 +51,7 @@ def add_color(
     db.add(new_color)
     db.commit()
     db.refresh(new_color)
-    return {"message": "Color registered successfully"}
+    return new_color
 
 
 @router.delete("/{color}", status_code=status.HTTP_200_OK)
@@ -58,7 +60,7 @@ def del_color(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    existing_color = db.query(Color).filter(Color.color == color).first()
+    existing_color = get_color(db, color)
 
     if not existing_color:
         raise HTTPException(status_code=404, detail="Color not found")

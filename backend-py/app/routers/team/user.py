@@ -8,7 +8,6 @@ from app.crud.team import get_team, is_user_in_team
 from app.crud.user import get_user
 
 from app.models.user import User
-from app.models.team import Team
 
 from app.schemas.user import UserResponse
 from app.schemas.team import AddUserToTeam

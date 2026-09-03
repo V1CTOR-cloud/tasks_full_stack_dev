@@ -9,7 +9,7 @@ class TeamCreate(BaseModel):
 
 class TeamUpdate(BaseModel):
     name: str | None = None
-    hex_color: str | None = None
+    hex_color: str
 
 
 class TeamResponse(BaseModel):
